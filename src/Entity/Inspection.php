@@ -2,25 +2,34 @@
 
 namespace App\Entity;
 
-class Inspection
+class Inspection extends JsonEntityBase
 {
-    private ?int $id = null;
+    #[JSON\Column]
+    protected ?int $id = null;
 
-    private ?string $description = null;
+    #[JSON\Column]
+    protected ?string $description = null;
 
-    private ?string $type = null;
+    #[JSON\Column]
+    protected ?string $type = null;
 
-    private ?\DateTimeInterface $date = null;
+    #[JSON\Column]
+    protected ?\DateTimeInterface $date = null;
 
-    private ?int $week = null;
+    #[JSON\Column]
+    protected ?int $week = null;
 
-    private ?string $status = null;
+    #[JSON\Column]
+    protected ?string $status = null;
 
-    private ?string $postInspectionServices = null;
+    #[JSON\Column]
+    protected ?string $postInspectionServices = null;
 
-    private ?string $phone = null;
+    #[JSON\Column]
+    protected ?string $phone = null;
 
-    private ?\DateTimeInterface $created = null;
+    #[JSON\Column]
+    protected ?\DateTimeInterface $created = null;
 
     public function getId(): ?int
     {
@@ -44,7 +53,7 @@ class Inspection
         return $this->type;
     }
 
-    public function setType(string $type): static
+    public function setType(?string $type): static
     {
         $this->type = $type;
 
@@ -80,7 +89,7 @@ class Inspection
         return $this->status;
     }
 
-    public function setStatus(string $status): static
+    public function setStatus(?string $status): static
     {
         $this->status = $status;
 
@@ -116,7 +125,7 @@ class Inspection
         return $this->created;
     }
 
-    public function setCreated(\DateTimeInterface $created): static
+    public function setCreated(?\DateTimeInterface $created): static
     {
         $this->created = $created;
 

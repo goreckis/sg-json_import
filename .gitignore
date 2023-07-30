@@ -9,4 +9,5 @@
 /var/
 /vendor/
 /.idea
+/db
 ###< symfony/framework-bundle ###

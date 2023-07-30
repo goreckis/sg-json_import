@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Entity;
-class FailureReport
+class FailureReport extends JsonEntityBase
 {
     private ?int $id = null;
 
@@ -43,7 +43,7 @@ class FailureReport
         return $this->type;
     }
 
-    public function setType(string $type): static
+    public function setType(?string $type): static
     {
         $this->type = $type;
 
@@ -55,7 +55,7 @@ class FailureReport
         return $this->priority;
     }
 
-    public function setPriority(string $priority): static
+    public function setPriority(?string $priority): static
     {
         $this->priority = $priority;
 
@@ -79,7 +79,7 @@ class FailureReport
         return $this->status;
     }
 
-    public function setStatus(string $status): static
+    public function setStatus(?string $status): static
     {
         $this->status = $status;
 
@@ -115,7 +115,7 @@ class FailureReport
         return $this->created;
     }
 
-    public function setCreated(\DateTimeInterface $created): static
+    public function setCreated(?\DateTimeInterface $created): static
     {
         $this->created = $created;
 
