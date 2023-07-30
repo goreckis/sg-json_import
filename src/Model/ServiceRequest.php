@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace App\Model;
 
 class ServiceRequest {
-    private ?int $number;
+    private ?int $number =  NULL;
 
-    private ?string $description;
+    private ?string $description =  NULL;
 
-    private ?string $dueDate;
+    private ?string $dueDate =  NULL;
 
-    private ?string $phone;
+    private ?string $phone =  NULL;
 
     public function setNumber(?int $number): void {
         $this->number = $number;

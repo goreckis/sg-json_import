@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use Exception;
 use Jajo\JSONDB;
 use ReflectionClass;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
@@ -49,14 +50,19 @@ abstract class JsonEntityBase
         return $this;
     }
 
-    public function save(): void {
-        $data = $this->normalize();
-
-        if ($this->hasId()) {
+    public function save(bool $check_unique = TRUE): void {
+        if (!$this->hasId()) {
+            if ($check_unique && !$this->isUnique()) {
+                return;
+            }
+            $this->setCreated(new \DateTime('now'));
+            $data = $this->normalize();
             $data['id'] = $this->getLastId()+1;
+
             $this->db->insert($this->db_name, $data);
         }
         else {
+            $data = $this->normalize();
             $this->db->update($data)
                 ->from($this->db_name)
                 ->where(['id' => $this->getId()])
@@ -65,7 +71,7 @@ abstract class JsonEntityBase
     }
 
     public function hasId(): bool {
-        return $this->getId() === null;
+        return $this->getId() !== null;
     }
 
     public function normalize(): array
@@ -91,6 +97,46 @@ abstract class JsonEntityBase
         }
 
         return reset($allIds)['id'];
+    }
+
+    protected function getUniqueColumns(): array {
+        $columns = [];
+        $reflectionClass = new ReflectionClass($this);
+
+        $properties = $reflectionClass->getProperties();
+
+        foreach ($properties as $property) {
+            if (!empty($property->getAttributes('App\Entity\JSON\Unique'))) {
+                $columns[] = $property->getName();
+            }
+        }
+
+        return $columns;
+    }
+
+    protected function isUnique(): bool {
+        $values = [];
+        foreach ($this->getUniqueColumns() as $column) {
+            $values[$column] = $this->$column;
+        }
+
+        if (empty($values)) {
+            return TRUE;
+        }
+
+        try {
+            $duplicates = $this->db->select()
+                ->from($this->getDbFileName())
+                ->where($values)
+                ->get();
+        }
+        catch (Exception) {}
+
+        if (!empty($duplicates)) {
+            throw new Exception('This entity already exist in database');
+        }
+
+        return TRUE;
     }
 
     abstract public function getId(): ?int;

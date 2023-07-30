@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Command;
 
-use App\Entity\Inspection;
+use App\Entity\InvalidRequest;
 use App\Model\ServiceRequest;
+use App\Service\RequestTypeParser;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -27,6 +29,7 @@ class ImportRequestsCommand extends Command
     public function __construct(
         string $projectDir,
         private readonly SerializerInterface $serializer,
+        protected RequestTypeParser $typeParser,
     )
     {
         $this->projectDir = $projectDir;
@@ -41,6 +44,7 @@ class ImportRequestsCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
+        $report['failed'] = 0;
         $file_name = $this->projectDir . self::IMPORT_DIR . $input->getArgument('filename');
 
         if (!$tasks = file_get_contents($file_name)) {
@@ -49,10 +53,36 @@ class ImportRequestsCommand extends Command
         $tasks = json_decode($tasks);
 
         foreach ($tasks as $task) {
-            $task_object = $this->serializer->deserialize(json_encode($task), ServiceRequest::class, 'json');
+            $taskObject = $this->serializer->deserialize(json_encode($task), ServiceRequest::class, 'json');
+            $entity = $this->typeParser->processRequest($taskObject);
 
-            // @todo parse the object and save.
+            try
+            {
+                $entity->setByServiceRequest($taskObject);
+                $entity->save();
+                $report[$entity::TYPE] = isset($report[$entity::TYPE]) ? $report[$entity::TYPE]+1 : 1;
+                $output->writeln([
+                    'Created new ' . $entity::TYPE . ' number: ' . $task->number,
+                ]);
+            }
+            catch (\Exception $e)
+            {
+                $report['failed'] = $report['failed']+1;
+                $invalidRequest = new InvalidRequest();
+                $invalidRequest->setByServiceRequest($taskObject);
+                $invalidRequest->save();
+                $output->writeln([
+                    'Error during saving task number: ' . $task->number . ': ' . $e->getMessage(),
+                ]);
+            }
         }
+
+        foreach ($report as $type => $counter) {
+            $rows[] = [$type, $counter];
+        }
+        $table = new Table($output);
+        $table->setHeaders(['Type', 'Processed'])->setRows($rows);
+        $table->render();
 
         return Command::SUCCESS;
     }

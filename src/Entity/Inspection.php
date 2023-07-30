@@ -1,13 +1,23 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Entity;
 
-class Inspection extends JsonEntityBase
+use App\Model\ServiceRequest;
+
+class Inspection extends JsonEntityBase implements ServiceRequestInterface
 {
+    use ServiceRequestTrait;
+    public const TYPE = 'przegląd';
+    public const SCHEDULED_STATUS = 'zaplanowano';
+    public const NEW_STATUS = 'nowy';
+
     #[JSON\Column]
     protected ?int $id = null;
 
     #[JSON\Column]
+    #[JSON\Unique]
     protected ?string $description = null;
 
     #[JSON\Column]
@@ -128,6 +138,21 @@ class Inspection extends JsonEntityBase
     public function setCreated(?\DateTimeInterface $created): static
     {
         $this->created = $created;
+
+        return $this;
+    }
+
+    public function setByServiceRequest(ServiceRequest $request): ServiceRequestInterface
+    {
+        $this->setDescription($request->getDescription());
+        $this->setPhone($request->getPhone());
+        $this->setType(self::TYPE);
+        if ($date = $request->getDate()) {
+            $date = $this->parseDate($date);
+            $this->setDate($date);
+            $this->setWeek((int) $date->format('W'));
+        }
+        $this->setStatusByDate($request->getDate());
 
         return $this;
     }

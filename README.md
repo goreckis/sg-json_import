@@ -1,3 +1,8 @@
+# Usage of the Application
+1. Put the JSON file to import in `./public/import` catalog.
+2. Run command `import:requests {your-file.json}`.
+3. The JSON files with imported service requests will be created in `./db` catalog
+
 # Symfony Docker
 
 A [Docker](https://www.docker.com/)-based installer and runtime for the [Symfony](https://symfony.com) web framework, with full [HTTP/2](https://symfony.com/doc/current/weblink.html), HTTP/3 and HTTPS support.

@@ -1,25 +1,46 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Entity;
-class FailureReport extends JsonEntityBase
+use App\Model\ServiceRequest;
+
+class FailureReport extends JsonEntityBase implements ServiceRequestInterface
 {
-    private ?int $id = null;
+    use ServiceRequestTrait;
+    public const TYPE = 'zgłoszenie awarii';
+    public const PRIORITY_URGENT = 'pilne';
+    public const PRIORITY_CRITICAL = 'krytyczny';
+    public const PRIORITY_NORMAL = 'normalny';
+    public const NEW_STATUS = 'nowy';
+    public const SCHEDULED_STATUS = 'termin';
+    #[JSON\Column]
+    protected ?int $id = null;
 
-    private ?string $description = null;
+    #[JSON\Column]
+    #[JSON\Unique]
+    protected ?string $description = null;
 
-    private ?string $type = null;
+    #[JSON\Column]
+    protected ?string $type = null;
 
-    private ?string $priority = null;
+    #[JSON\Column]
+    protected ?string $priority = null;
 
-    private ?\DateTimeInterface $dateOfService = null;
+    #[JSON\Column]
+    protected ?\DateTimeInterface $dateOfService = null;
 
-    private ?string $status = null;
+    #[JSON\Column]
+    protected ?string $status = null;
 
-    private ?string $notices = null;
+    #[JSON\Column]
+    protected ?string $notices = null;
 
-    private ?string $phone = null;
+    #[JSON\Column]
+    protected ?string $phone = null;
 
-    private ?\DateTimeInterface $created = null;
+    #[JSON\Column]
+    protected ?\DateTimeInterface $created = null;
 
     public function getId(): ?int
     {
@@ -118,6 +139,30 @@ class FailureReport extends JsonEntityBase
     public function setCreated(?\DateTimeInterface $created): static
     {
         $this->created = $created;
+
+        return $this;
+    }
+
+    public function setPriorityByDescription(): void
+    {
+        if (preg_match('/\bbardzo pilne\b/iu', $this->getDescription())) {
+            $this->setPriority(self::PRIORITY_CRITICAL);
+        } elseif (preg_match('/\b(bardzo\s*)?pilne(!|\p{P})?\b/iu', $this->getDescription())) {
+            $this->setPriority(self::PRIORITY_URGENT);
+        } else {
+            $this->setPriority(self::PRIORITY_NORMAL);
+        }
+    }
+
+    public function setByServiceRequest(ServiceRequest $request): ServiceRequestInterface
+    {
+        $this->setDescription($request->getDescription());
+        $this->setPhone($request->getPhone());
+        $this->setPriorityByDescription($request->getDescription());
+        if ($date = $request->getDate()) {
+            $this->setDateOfService($this->parseDate($date));
+        }
+        $this->setStatusByDate($request->getDate());
 
         return $this;
     }
